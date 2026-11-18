@@ -1,0 +1,188 @@
+{
+  "person": "kelsey",
+  "capacity": 40,
+  "tasks": [
+    {
+      "id": "kelsey-mwmcx7n8",
+      "project": "gpi",
+      "title": "DG",
+      "status": "In Progress",
+      "estimate": null,
+      "due": "2026-12-11",
+      "with": [
+        "steve",
+        "winston"
+      ],
+      "notes": "",
+      "checklist": [],
+      "log": [],
+      "start": "2026-10-18"
+    },
+    {
+      "id": "kelsey-mwmdbli7",
+      "project": "gca",
+      "title": "Dashboard Onboarding Deck",
+      "status": "Review",
+      "estimate": 10,
+      "due": "2026-11-11",
+      "with": [],
+      "notes": "",
+      "checklist": [
+        {
+          "text": "Slide Deck",
+          "done": true,
+          "who": "kelsey",
+          "date": "2026-11-11",
+          "hours": 10
+        }
+      ],
+      "log": [],
+      "reviewer": "kuan"
+    },
+    {
+      "id": "kelsey-mwmdlzwm",
+      "project": "gca",
+      "title": "Forma Onboarding Deck",
+      "status": "Backlog",
+      "due": "",
+      "with": [],
+      "notes": "",
+      "checklist": []
+    },
+    {
+      "id": "kelsey-mwmdnsak",
+      "project": "gca",
+      "title": "V2.0",
+      "status": "In Progress",
+      "due": "2026-12-04",
+      "with": [
+        "winston"
+      ],
+      "notes": "",
+      "checklist": [
+        {
+          "text": "Prototype & clarify functionalities",
+          "done": true,
+          "who": "kelsey",
+          "doneDate": "2026-11-18"
+        },
+        {
+          "text": "Kuan to QAQC and approve prototype",
+          "done": true,
+          "who": [
+            "kelsey",
+            "winston",
+            "kuan"
+          ],
+          "doneDate": "2026-11-18"
+        },
+        {
+          "text": "Allow specified users to alter due date rules",
+          "done": false,
+          "who": [
+            "kelsey",
+            "winston"
+          ]
+        },
+        {
+          "text": "Show most recent edited to due date rules, but also have full version history in back end",
+          "done": false,
+          "who": [
+            "kelsey",
+            "winston"
+          ]
+        },
+        {
+          "text": "Add tooltips of due date calculations to RFIs & Submittals",
+          "done": false,
+          "who": [
+            "kelsey",
+            "winston"
+          ]
+        },
+        {
+          "text": "Accommodate different time zones (Forma is UTC)",
+          "done": false,
+          "who": [
+            "kelsey",
+            "winston"
+          ]
+        }
+      ],
+      "start": "2026-11-16"
+    },
+    {
+      "id": "kelsey-mwmdrndv",
+      "project": "gca",
+      "title": "GC Pitch Deck",
+      "status": "In Progress",
+      "due": "2026-11-25",
+      "with": [],
+      "notes": "",
+      "checklist": [
+        {
+          "text": "Make slides",
+          "done": false,
+          "who": [
+            "kelsey"
+          ]
+        },
+        {
+          "text": "Review w/ Kuan",
+          "done": false,
+          "who": [
+            "kuan"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "kelsey-mwmdtmt6",
+      "project": "gca",
+      "title": "DG",
+      "status": "Backlog",
+      "due": "2026-12-09",
+      "with": [
+        "steve",
+        "winston"
+      ],
+      "notes": "",
+      "checklist": []
+    },
+    {
+      "id": "kelsey-mwme01j5",
+      "project": "gpi",
+      "title": "V1.0",
+      "status": "Backlog",
+      "due": "2026-12-18",
+      "with": [
+        "winston"
+      ],
+      "notes": "",
+      "checklist": [
+        {
+          "text": "Refine homepage globe HTML",
+          "done": false,
+          "who": [
+            "kelsey"
+          ]
+        },
+        {
+          "text": "Refine project index HTML",
+          "done": false,
+          "who": [
+            "kelsey"
+          ]
+        },
+        {
+          "text": "Fix Tim's comments for key metrics comparison HTML",
+          "done": false,
+          "who": [
+            "kelsey"
+          ]
+        }
+      ],
+      "start": "2026-09-23"
+    }
+  ]
+}

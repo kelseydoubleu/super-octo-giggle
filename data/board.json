@@ -1,8 +1,58 @@
 {
-  "person": "kelsey",
-  "capacity": 40,
+  "teamName": "Super Octo Giggle",
+  "repo": "kelseydoubleu/super-octo-giggle",
+  "branch": "main",
+  "statuses": [
+    "Backlog",
+    "This Week",
+    "In Progress",
+    "Review",
+    "Done"
+  ],
+  "projects": [
+    {
+      "id": "gca",
+      "name": "blue gatorade",
+      "color": "#2bb3d9"
+    },
+    {
+      "id": "gpi",
+      "name": "pokedex",
+      "color": "#fe0b0b"
+    },
+    {
+      "id": "admin",
+      "name": "airbender",
+      "color": "#8a8f9c"
+    }
+  ],
+  "people": [
+    {
+      "id": "kelsey",
+      "name": "KW"
+    },
+    {
+      "id": "steve",
+      "name": "SC"
+    },
+    {
+      "id": "winston",
+      "name": "WZ"
+    }
+  ],
+  "guests": [
+    {
+      "id": "kuan",
+      "name": "KC"
+    },
+    {
+      "id": "islay",
+      "name": "IB"
+    }
+  ],
   "tasks": [
     {
+      "owner": "kelsey",
       "id": "kelsey-mwmcx7n8",
       "project": "gpi",
       "title": "DG",
@@ -19,6 +69,7 @@
       "start": "2026-10-18"
     },
     {
+      "owner": "kelsey",
       "id": "kelsey-mwmdbli7",
       "project": "gca",
       "title": "Dashboard Onboarding Deck",
@@ -40,6 +91,7 @@
       "reviewer": "kuan"
     },
     {
+      "owner": "kelsey",
       "id": "kelsey-mwmdlzwm",
       "project": "gca",
       "title": "Forma Onboarding Deck",
@@ -50,6 +102,7 @@
       "checklist": []
     },
     {
+      "owner": "kelsey",
       "id": "kelsey-mwmdnsak",
       "project": "gca",
       "title": "V2.0",
@@ -112,6 +165,7 @@
       "start": "2026-11-16"
     },
     {
+      "owner": "kelsey",
       "id": "kelsey-mwmdrndv",
       "project": "gca",
       "title": "GC Pitch Deck",
@@ -137,6 +191,7 @@
       ]
     },
     {
+      "owner": "kelsey",
       "id": "kelsey-mwmdtmt6",
       "project": "gca",
       "title": "DG",
@@ -150,6 +205,7 @@
       "checklist": []
     },
     {
+      "owner": "kelsey",
       "id": "kelsey-mwme01j5",
       "project": "gpi",
       "title": "V1.0",
@@ -183,6 +239,32 @@
         }
       ],
       "start": "2026-09-23"
+    },
+    {
+      "owner": "steve",
+      "id": "steve-mwmgxne7",
+      "project": "gpi",
+      "title": "gPAL Onboarding Deck",
+      "status": "Backlog",
+      "due": "2026-12-11",
+      "with": [
+        "kelsey"
+      ],
+      "notes": "",
+      "checklist": [
+        {
+          "text": "Make slides",
+          "done": false,
+          "who": [
+            "kelsey",
+            "steve"
+          ]
+        },
+        {
+          "text": "Claudine to review",
+          "done": false
+        }
+      ]
     }
   ]
 }

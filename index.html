@@ -416,6 +416,8 @@
   .av { font-size: 9px !important; letter-spacing: -0.03em; width: 26px; height: 26px; }
   .av + .av { margin-left: -6px; }
   .pick .av, .bic .av, .mhrs .av, .mdone .av, .byperson .av, .pick .menu .av { width: 22px; height: 22px; font-size: 8px !important; }
+
+  .merged { background: #f6f4ff; border: 1px solid #e3defe; border-radius: 10px; padding: 10px 12px; color: var(--ink) !important; }
 </style>
 </head>
 <body>
@@ -435,7 +437,7 @@
   <button class="btn primary" id="exportBtn" style="display:none">Push Changes</button>
 </header>
 
-<div class="notice info" id="demoNote">Showing built-in sample data because the data folder could not be loaded. Serve this folder (GitHub Pages or a local server) to read the real files.</div>
+<div class="notice info" id="demoNote"></div>
 <div class="notice" id="dirtyNote"></div>
 
 <div class="bar">
@@ -454,7 +456,6 @@
 
 <script>
 /* Fallback copy of the sample data, used only when data/ can't be fetched (e.g. opened as a local file). */
-const FALLBACK = null; // filled by build step if needed
 
 const DAY = 86400000;
 const S = { cal: "week", monthStart: new Date(new Date().getFullYear(), new Date().getMonth(), 1), view: "board", person: "all", project: "all", q: "", weekStart: mondayOf(new Date()) };
@@ -523,41 +524,70 @@ async function getJSON(url) {
   return r.text();
 }
 
+/* ---------- one file: data/board.json ----------
+   In memory, tasks are grouped per owner (files[pid].tasks) and settings live in `team`.
+   buildBoard() turns that back into the single JSON file. */
+const BOARD_PATH = "data/board.json";
+let baseBoard = "", orphans = [];
+const strip = o => JSON.parse(JSON.stringify(o));
+
+function splitBoard(b) {
+  const { tasks = [], ...rest } = strip(b);
+  team = rest; files = { __team: team };
+  for (const p of team.people) files[p.id] = { tasks: [] };
+  orphans = [];
+  for (const t of tasks) { const { owner, ...r } = t; if (files[owner]) files[owner].tasks.push(r); else orphans.push(t); }
+}
+function buildBoard() {
+  return { ...strip(team), tasks: [...team.people.flatMap(p => (files[p.id]?.tasks || []).map(t => ({ owner: p.id, ...t }))), ...orphans] };
+}
+
+/* three-way merge so pushing never wipes someone else's changes */
+function mergeById(b = [], m = [], t = []) {
+  const key = x => x.id, B = new Map(b.map(x => [key(x), x])), M = new Map(m.map(x => [key(x), x])), T = new Map(t.map(x => [key(x), x]));
+  const ids = [...new Set([...t.map(key), ...m.map(key)])], out = [];
+  for (const id of ids) {
+    const bi = B.get(id), mi = M.get(id), ti = T.get(id);
+    const iChanged = JSON.stringify(mi) !== JSON.stringify(bi);
+    const pick = iChanged ? mi : ti;
+    if (pick !== undefined && !(iChanged && mi === undefined)) out.push(pick);
+  }
+  return out;
+}
+function mergeBoards(b, m, t) {
+  const out = {};
+  for (const k of new Set([...Object.keys(t), ...Object.keys(m)])) {
+    if (["tasks", "projects", "people", "guests"].includes(k)) out[k] = mergeById(b[k], m[k], t[k]);
+    else out[k] = JSON.stringify(m[k]) !== JSON.stringify(b[k]) ? m[k] : t[k];
+  }
+  // keep tasks last for readability
+  const { tasks, ...rest } = out; return { ...rest, tasks: tasks || [] };
+}
+
 async function load() {
-  files = {}; base = {}; dirty = new Set(); stale = new Set(); demo = false;
-  try {
-    const teamTxt = await getJSON("data/team.json");
-    team = JSON.parse(teamTxt); base.__team = norm(teamTxt);
-    await Promise.all(team.people.map(async p => {
-      try { const txt = await getJSON(p.file); base[p.id] = norm(txt); files[p.id] = JSON.parse(txt); }
-      catch (e) { console.warn("Missing file for", p.id, e); files[p.id] = { person: p.id, capacity: 40, tasks: [] }; base[p.id] = norm(JSON.stringify(files[p.id])); }
-    }));
-  } catch (e) {
-    if (!FALLBACK) { document.getElementById("main").innerHTML = `<p class="empty">Could not load data/team.json. Serve this folder over http (GitHub Pages, or <code>python3 -m http.server</code>).</p>`; return; }
-    demo = true; team = FALLBACK.team;
-    for (const p of team.people) { files[p.id] = structuredClone(FALLBACK.files[p.id]); base[p.id] = norm(JSON.stringify(files[p.id])); }
+  dirty = new Set(); stale = new Set(); demo = false;
+  let remote;
+  try { const txt = await getJSON(BOARD_PATH); remote = JSON.parse(txt); }
+  catch (e) { document.getElementById("main").innerHTML = `<p class="empty">Could not load ${BOARD_PATH}. Serve this folder over http (GitHub Pages, or <code>python3 -m http.server</code>).</p>`; return; }
+  baseBoard = norm(JSON.stringify(remote));
+  let data = remote;
+  const d = LS.get("tb-draft-board");
+  if (d && d.data) {
+    data = d.base && d.base !== baseBoard ? mergeBoards(JSON.parse(d.base), d.data, remote) : d.data;
+    if (d.base !== baseBoard) LS.set("tb-draft-board", { base: baseBoard, data });
   }
-  for (const p of team.people) files[p.id].tasks ||= [];
-  // restore local drafts (team.json first, it defines projects)
-  const td = LS.get("tb-draft-__team");
-  if (td && td.data) { team = td.data; dirty.add("__team"); if (td.base !== base.__team) stale.add("__team"); }
-  base.__team ||= norm(JSON.stringify(team));
-  files.__team = team;
-  for (const p of team.people) {
-    const d = LS.get("tb-draft-" + p.id);
-    if (d && d.data) { files[p.id] = d.data; dirty.add(p.id); if (d.base !== base[p.id]) stale.add(p.id); }
-  }
+  ["tb-draft-__team", "tb-draft-kelsey", "tb-draft-steve", "tb-draft-winston"].forEach(k => LS.del(k)); // old per-file drafts
+  splitBoard(data);
+  if (norm(JSON.stringify(buildBoard())) !== baseBoard) dirty.add("board"); else LS.del("tb-draft-board");
   setupControls();
   render();
 }
 function norm(txt) { try { return JSON.stringify(JSON.parse(txt)); } catch { return txt; } }
 
-function fileOf(id) { return id === "__team" ? "data/team.json" : (person(id).file || `data/people/${id}.json`); }
-function fileName(id) { return fileOf(id).split("/").pop(); }
-function markDirty(owner) {
-  const now = norm(JSON.stringify(files[owner]));
-  if (now === base[owner]) { dirty.delete(owner); LS.del("tb-draft-" + owner); }
-  else { dirty.add(owner); LS.set("tb-draft-" + owner, { base: base[owner], data: files[owner] }); }
+function markDirty() {
+  const data = buildBoard(), now = norm(JSON.stringify(data));
+  if (now === baseBoard) { dirty.clear(); LS.del("tb-draft-board"); }
+  else { dirty.add("board"); LS.set("tb-draft-board", { base: baseBoard, data }); }
   renderDirty();
 }
 
@@ -896,7 +926,7 @@ function drawDrawer(focusTitle) {
     <textarea id="dNotes" placeholder="Context, links, decisions, what done looks like">${esc(t.notes || "")}</textarea>
 
     <div style="margin-top:30px;display:flex;justify-content:space-between;align-items:center">
-      <span class="cap">Saved to <code>${esc(fileName(owner))}</code> · ${esc(t.id)}</span>
+      <span class="cap">${esc(t.id)}</span>
       <button class="btn danger" id="dDel">Delete Task</button>
     </div>`;
 
@@ -977,61 +1007,63 @@ function confirmInline(btn) {
 function renderDirty() {
   const n = document.getElementById("dirtyNote"), b = document.getElementById("exportBtn");
   if (!dirty.size) { n.classList.remove("show"); b.style.display = "none"; return; }
-  b.style.display = ""; b.textContent = `Push Changes (${dirty.size})`;
+  b.style.display = ""; b.textContent = "Push Changes";
   n.classList.add("show");
-  n.innerHTML = `Unsaved local edits in ${[...dirty].map(id => `<code>${esc(fileName(id))}</code>`).join(", ")}. They live in this browser until you commit them to GitHub.
-    ${stale.size ? `<span class="stale">The repo version of ${[...stale].map(id => esc(fileName(id))).join(", ")} changed since you started editing.</span>` : ""}
+  n.innerHTML = `You have unsaved edits. They live in this browser until you commit <code>board.json</code> to GitHub.
     <button class="btn" onclick="openExport()">Review</button>`;
 }
 
-function openExport() {
+async function openExport() {
   const m = document.getElementById("modal"); m.classList.remove("small");
   const branch = team.branch || "main";
+  const gh = team.repo && !team.repo.startsWith("your-org") ? `https://github.com/${team.repo}/edit/${branch}/${BOARD_PATH}` : "";
+  m.innerHTML = `<div class="mh"><h3>Push Changes To GitHub</h3><button class="x" onclick="closeModal()">✕</button></div><div class="mb"><p>Checking GitHub for newer changes…</p></div>`;
+  m.classList.add("show"); document.getElementById("scrim").classList.add("show");
+
+  // pull the latest file and fold in anything teammates pushed meanwhile
+  let latest = null, mergedNote = "";
+  try { latest = JSON.parse(await getJSON(BOARD_PATH)); } catch {}
+  let data = buildBoard();
+  if (latest && norm(JSON.stringify(latest)) !== baseBoard) {
+    data = mergeBoards(JSON.parse(baseBoard), data, latest);
+    mergedNote = `<p class="merged">Someone pushed changes since you loaded the board. They're merged in below, so pasting this won't erase their work.</p>`;
+  }
+  const json = JSON.stringify(data, null, 2);
   m.innerHTML = `<div class="mh"><h3>Push Changes To GitHub</h3><button class="x" onclick="closeModal()">✕</button></div>
   <div class="mb">
-    <p>Copy each file, open it on GitHub, select all, paste, and commit. Then click Mark As Pushed so this browser drops its draft.</p>
-    ${[...dirty].map(id => {
-      const path = fileOf(id);
-      const json = JSON.stringify(files[id], null, 2);
-      const gh = team.repo && !team.repo.startsWith("your-org") ? `https://github.com/${team.repo}/edit/${branch}/${path}` : "";
-      return `<div class="exp" data-f="${id}">
-        <div class="eh"><code>${esc(path)}</code>
-          ${stale.has(id) ? `<span class="stale">Repo changed since your draft. Check before overwriting.</span>` : ""}
-          <button class="btn" data-copy>Copy</button>
-          <button class="btn" data-dl>Download</button>
-          ${gh ? `<a class="btn" href="${gh}" target="_blank" rel="noopener" style="text-decoration:none">Open On GitHub</a>` : ""}
-          <button class="btn primary" data-done>Mark As Pushed</button>
-          <button class="btn danger" data-discard>Discard</button>
-        </div>
-        <textarea readonly>${esc(json)}</textarea>
-      </div>`;
-    }).join("") || `<p>Nothing to push.</p>`}
+    <p>Copy, open <code>${BOARD_PATH}</code> on GitHub, select all, paste, and commit. Then click Mark As Pushed.</p>
+    ${mergedNote}
+    <div class="exp">
+      <div class="eh"><code>${BOARD_PATH}</code>
+        <button class="btn" data-copy>Copy</button>
+        <button class="btn" data-dl>Download</button>
+        ${gh ? `<a class="btn" href="${gh}" target="_blank" rel="noopener" style="text-decoration:none">Open On GitHub</a>` : ""}
+        <button class="btn primary" data-done>Mark As Pushed</button>
+        <button class="btn danger" data-discard>Discard</button>
+      </div>
+      <textarea readonly>${esc(json)}</textarea>
+    </div>
   </div>`;
-  m.querySelectorAll(".exp").forEach(box => {
-    const id = box.dataset.f, ta = box.querySelector("textarea");
-    box.querySelector("[data-copy]").onclick = async e => {
-      try { await navigator.clipboard.writeText(ta.value); } catch { ta.select(); document.execCommand("copy"); }
-      e.target.textContent = "Copied";
-    };
-    box.querySelector("[data-dl]").onclick = () => {
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(new Blob([ta.value + "\n"], { type: "application/json" }));
-      a.download = fileName(id); a.click();
-    };
-    box.querySelector("[data-done]").onclick = () => {
-      base[id] = norm(JSON.stringify(files[id])); dirty.delete(id); stale.delete(id); LS.del("tb-draft-" + id);
-      render(); dirty.size ? openExport() : closeModal();
-    };
-    box.querySelector("[data-discard]").onclick = async e => {
-      if (!confirmInline2(e.target)) return;
-      LS.del("tb-draft-" + id); files[id] = JSON.parse(base[id]); dirty.delete(id); stale.delete(id);
-      if (id === "__team") { team = files.__team; setupFilters(); }
-      render(); dirty.size ? openExport() : closeModal();
-    };
-  });
-  m.classList.add("show"); document.getElementById("scrim").classList.add("show");
+  const ta = m.querySelector("textarea");
+  m.querySelector("[data-copy]").onclick = async e => {
+    try { await navigator.clipboard.writeText(ta.value); } catch { ta.select(); document.execCommand("copy"); }
+    e.target.textContent = "Copied";
+  };
+  m.querySelector("[data-dl]").onclick = () => {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([ta.value + "\n"], { type: "application/json" }));
+    a.download = "board.json"; a.click();
+  };
+  m.querySelector("[data-done]").onclick = () => {
+    splitBoard(data); baseBoard = norm(JSON.stringify(data)); dirty.clear(); LS.del("tb-draft-board");
+    setupFilters(); closeModal(); render();
+  };
+  m.querySelector("[data-discard]").onclick = e => {
+    if (!confirmInline2(e.target)) return;
+    LS.del("tb-draft-board"); closeModal(); load();
+  };
 }
-/* ---------- project editor (writes data/team.json) ---------- */
+/* ---------- project editor ---------- */
 const SWATCHES = ["#4f7cff", "#22c3a0", "#ff9f43", "#a77bff", "#ff6f9f", "#f5b83d", "#2bb3d9", "#8a8f9c"];
 function openProjectEditor(id) {
   const p = id ? team.projects.find(x => x.id === id) : null;
@@ -1045,7 +1077,7 @@ function openProjectEditor(id) {
       <label>Color</label><div class="swatches">${SWATCHES.map(c => `<button class="sw-btn ${c === color ? "on" : ""}" data-c="${c}" style="background:${c}"></button>`).join("")}<input type="color" id="pjColor" value="${color}" title="Custom color"></div>
       ${p ? `<label>Archived</label><label style="display:flex;gap:8px;align-items:center;color:var(--ink)"><input type="checkbox" id="pjArch" ${p.archived ? "checked" : ""}> Hide from filters and new tasks</label>` : ""}
     </div>
-    <p class="cap" style="margin:0 0 18px">Projects live in <code>data/team.json</code>, which everyone shares. Push it soon after editing so others get the change.</p>
+    <p class="cap" style="margin:0 0 18px">Saved with everything else in <code>board.json</code>.</p>
     <div style="display:flex;gap:8px;align-items:center">
       <button class="btn primary" id="pjSave">${p ? "Save" : "Create Project"}</button>
       <button class="btn" onclick="closeModal()">Cancel</button>
@@ -1065,15 +1097,15 @@ function openProjectEditor(id) {
       while (team.projects.some(x => x.id === nid)) nid = slug + "-" + n++;
       team.projects.push({ id: nid, name, color });
     }
-    markDirty("__team"); setupFilters(); closeModal(); render();
+    markDirty(); setupFilters(); closeModal(); render();
   };
   $("#pjSave").onclick = save;
   $("#pjName").onkeydown = e => { if (e.key === "Enter") save(); };
   if ($("#pjDel")) $("#pjDel").onclick = e => {
     if (!e.target.dataset.armed) { e.target.dataset.armed = 1; e.target.textContent = "Click Again To Delete"; return; }
-    team.projects = team.projects.filter(x => x.id !== id); files.__team = team;
+    team.projects = team.projects.filter(x => x.id !== id);
     if (S.project === id) S.project = "all";
-    markDirty("__team"); setupFilters(); closeModal(); render();
+    markDirty(); setupFilters(); closeModal(); render();
   };
   m.classList.add("show", "small"); document.getElementById("scrim").classList.add("show");
   setTimeout(() => $("#pjName").focus(), 30);

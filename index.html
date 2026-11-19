@@ -538,8 +538,19 @@ function splitBoard(b) {
   orphans = [];
   for (const t of tasks) { const { owner, ...r } = t; if (files[owner]) files[owner].tasks.push(r); else orphans.push(t); }
 }
+/* every task is written with the same fields in the same order (see _about in board.json) */
+const arr = v => Array.isArray(v) ? v : v ? [v] : [];
+function normTask(t, owner) {
+  const done = t.status === "Done", rev = t.status === "Review";
+  return {
+    id: t.id, owner: owner || t.owner, project: t.project, title: t.title || "", status: t.status || team.statuses[0],
+    start: t.start || null, due: t.due || null, doneDate: done ? (t.doneDate || null) : null,
+    reviewer: rev ? arr(t.reviewer) : [], with: arr(t.with), notes: t.notes || "",
+    checklist: (t.checklist || []).map(c => ({ text: c.text || "", done: !!c.done, who: arr(c.who), doneDate: c.done ? (c.doneDate || c.date || null) : null }))
+  };
+}
 function buildBoard() {
-  return { ...strip(team), tasks: [...team.people.flatMap(p => (files[p.id]?.tasks || []).map(t => ({ owner: p.id, ...t }))), ...orphans] };
+  return { ...strip(team), tasks: [...team.people.flatMap(p => (files[p.id]?.tasks || []).map(t => normTask(t, p.id))), ...orphans] };
 }
 
 /* three-way merge so pushing never wipes someone else's changes */

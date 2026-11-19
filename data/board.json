@@ -1,4 +1,26 @@
 {
+  "_about": {
+    "what": "Super Octo Giggle team to-do board. index.html reads this file. Settings first, then tasks. Every id below is a lowercase key; show people and projects by their 'name'.",
+    "statuses": "Board columns in order. 'Review' means waiting on someone (see task.reviewer). 'Done' means finished (see task.doneDate).",
+    "projects": "id: key used by task.project. name: display name. color: hex for charts. archived: true if hidden from pickers.",
+    "people": "Core team. id: key used by task.owner, task.with, task.reviewer and checklist.who. name: display initials.",
+    "guests": "Reviewers outside the core team (e.g. QAQC). Same id/name shape as people. They can appear in with, reviewer and checklist.who but never as owner.",
+    "task": {
+      "id": "Unique id, '<owner>-<suffix>'.",
+      "owner": "Person id responsible for the task (from people).",
+      "project": "Project id (from projects).",
+      "title": "Short description.",
+      "status": "One of statuses.",
+      "start": "YYYY-MM-DD the work starts, or null.",
+      "due": "YYYY-MM-DD it's due, or null.",
+      "doneDate": "YYYY-MM-DD it was moved to Done, or null if not done.",
+      "reviewer": "Ball in court: list of person or guest ids who must act. Only filled while status is 'Review', otherwise [].",
+      "with": "Other person or guest ids helping on the task.",
+      "notes": "Free text, what exactly needs to be done.",
+      "checklist": "Subtasks: { text, done (true/false), who (list of person or guest ids), doneDate (YYYY-MM-DD when checked off, or null) }."
+    },
+    "rules": "No time tracking. Progress = checklist items done / total. Overdue = due is before today and status is not Done. Unknown ids in with/who are free-typed names; show them as-is."
+  },
   "teamName": "Super Octo Giggle",
   "repo": "kelseydoubleu/super-octo-giggle",
   "branch": "main",
@@ -52,62 +74,71 @@
   ],
   "tasks": [
     {
-      "owner": "kelsey",
       "id": "kelsey-mwmcx7n8",
+      "owner": "kelsey",
       "project": "gpi",
       "title": "DG",
       "status": "In Progress",
-      "estimate": null,
+      "start": "2026-10-18",
       "due": "2026-12-11",
+      "doneDate": null,
+      "reviewer": [],
       "with": [
         "steve",
         "winston"
       ],
       "notes": "",
-      "checklist": [],
-      "log": [],
-      "start": "2026-10-18"
+      "checklist": []
     },
     {
-      "owner": "kelsey",
       "id": "kelsey-mwmdbli7",
+      "owner": "kelsey",
       "project": "gca",
       "title": "Dashboard Onboarding Deck",
       "status": "Review",
-      "estimate": 10,
+      "start": null,
       "due": "2026-11-11",
+      "doneDate": null,
+      "reviewer": [
+        "kuan"
+      ],
       "with": [],
       "notes": "",
       "checklist": [
         {
           "text": "Slide Deck",
           "done": true,
-          "who": "kelsey",
-          "date": "2026-11-11",
-          "hours": 10
+          "who": [
+            "kelsey"
+          ],
+          "doneDate": "2026-11-11"
         }
-      ],
-      "log": [],
-      "reviewer": "kuan"
+      ]
     },
     {
-      "owner": "kelsey",
       "id": "kelsey-mwmdlzwm",
+      "owner": "kelsey",
       "project": "gca",
       "title": "Forma Onboarding Deck",
       "status": "Backlog",
-      "due": "",
+      "start": null,
+      "due": null,
+      "doneDate": null,
+      "reviewer": [],
       "with": [],
       "notes": "",
       "checklist": []
     },
     {
-      "owner": "kelsey",
       "id": "kelsey-mwmdnsak",
+      "owner": "kelsey",
       "project": "gca",
       "title": "V2.0",
       "status": "In Progress",
+      "start": "2026-11-16",
       "due": "2026-12-04",
+      "doneDate": null,
+      "reviewer": [],
       "with": [
         "winston"
       ],
@@ -116,7 +147,9 @@
         {
           "text": "Prototype & clarify functionalities",
           "done": true,
-          "who": "kelsey",
+          "who": [
+            "kelsey"
+          ],
           "doneDate": "2026-11-18"
         },
         {
@@ -135,7 +168,8 @@
           "who": [
             "kelsey",
             "winston"
-          ]
+          ],
+          "doneDate": null
         },
         {
           "text": "Show most recent edited to due date rules, but also have full version history in back end",
@@ -143,7 +177,8 @@
           "who": [
             "kelsey",
             "winston"
-          ]
+          ],
+          "doneDate": null
         },
         {
           "text": "Add tooltips of due date calculations to RFIs & Submittals",
@@ -151,7 +186,8 @@
           "who": [
             "kelsey",
             "winston"
-          ]
+          ],
+          "doneDate": null
         },
         {
           "text": "Accommodate different time zones (Forma is UTC)",
@@ -159,18 +195,21 @@
           "who": [
             "kelsey",
             "winston"
-          ]
+          ],
+          "doneDate": null
         }
-      ],
-      "start": "2026-11-16"
+      ]
     },
     {
-      "owner": "kelsey",
       "id": "kelsey-mwmdrndv",
+      "owner": "kelsey",
       "project": "gca",
       "title": "GC Pitch Deck",
       "status": "In Progress",
+      "start": null,
       "due": "2026-11-25",
+      "doneDate": null,
+      "reviewer": [],
       "with": [],
       "notes": "",
       "checklist": [
@@ -179,24 +218,29 @@
           "done": false,
           "who": [
             "kelsey"
-          ]
+          ],
+          "doneDate": null
         },
         {
           "text": "Review w/ Kuan",
           "done": false,
           "who": [
             "kuan"
-          ]
+          ],
+          "doneDate": null
         }
       ]
     },
     {
-      "owner": "kelsey",
       "id": "kelsey-mwmdtmt6",
+      "owner": "kelsey",
       "project": "gca",
       "title": "DG",
       "status": "Backlog",
+      "start": null,
       "due": "2026-12-09",
+      "doneDate": null,
+      "reviewer": [],
       "with": [
         "steve",
         "winston"
@@ -205,12 +249,15 @@
       "checklist": []
     },
     {
-      "owner": "kelsey",
       "id": "kelsey-mwme01j5",
+      "owner": "kelsey",
       "project": "gpi",
       "title": "V1.0",
       "status": "Backlog",
+      "start": "2026-09-23",
       "due": "2026-12-18",
+      "doneDate": null,
+      "reviewer": [],
       "with": [
         "winston"
       ],
@@ -221,32 +268,37 @@
           "done": false,
           "who": [
             "kelsey"
-          ]
+          ],
+          "doneDate": null
         },
         {
           "text": "Refine project index HTML",
           "done": false,
           "who": [
             "kelsey"
-          ]
+          ],
+          "doneDate": null
         },
         {
           "text": "Fix Tim's comments for key metrics comparison HTML",
           "done": false,
           "who": [
             "kelsey"
-          ]
+          ],
+          "doneDate": null
         }
-      ],
-      "start": "2026-09-23"
+      ]
     },
     {
-      "owner": "steve",
       "id": "steve-mwmgxne7",
+      "owner": "steve",
       "project": "gpi",
       "title": "gPAL Onboarding Deck",
       "status": "Backlog",
+      "start": null,
       "due": "2026-12-11",
+      "doneDate": null,
+      "reviewer": [],
       "with": [
         "kelsey"
       ],
@@ -258,11 +310,14 @@
           "who": [
             "kelsey",
             "steve"
-          ]
+          ],
+          "doneDate": null
         },
         {
           "text": "Claudine to review",
-          "done": false
+          "done": false,
+          "who": [],
+          "doneDate": null
         }
       ]
     }
